@@ -1,0 +1,163 @@
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+    id 'kotlin-kapt'
+    id 'kotlinx-serialization'
+}
+
+android {
+    compileSdk 32
+    signingConfigs {
+        config {
+            enableV3Signing true
+            enableV4Signing true
+        }
+        release {
+            storeFile file('D:\\yu.jks')
+            storePassword 'Qinsansui233...'
+            keyAlias 'wusui'
+            keyPassword 'Qinsansui233...'
+        }
+        debug {
+            storeFile file('D:\\yu.jks')
+            storePassword 'Qinsansui233...'
+            keyAlias 'wusui'
+            keyPassword 'Qinsansui233...'
+        }
+    }
+    defaultConfig {
+        applicationId "xyz.with.observe"
+        minSdk 21
+        targetSdk 32
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary true
+        }
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            debuggable true
+            jniDebuggable true
+            renderscriptDebuggable false
+//            zipAlignEnabled true     //Zipalign优化
+//            shrinkResources true    // 移除无用的resource文件
+        }
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            debuggable false
+            jniDebuggable false
+            renderscriptDebuggable false
+            signingConfig signingConfigs.release
+            zipAlignEnabled true     //Zipalign优化
+            shrinkResources true    // 移除无用的resource文件
+            applicationVariants.all { variant ->
+                variant.outputs.all { output ->
+                    def outputFile = output.outputFile
+                    def fileName=""
+                    def date =new Date().format("yyyy_MM_dd", TimeZone.getTimeZone("GMT+08"))
+                    if (outputFile != null && outputFile.name.endsWith('.apk')) {
+                        if (variant.buildType.name == 'release') {//如果是release包
+                            fileName = "${defaultConfig.versionName}.apk"
+                        } else if (variant.buildType.name == 'debug') {//如果是debug包
+                            fileName = "${defaultConfig.versionName}.apk"
+                        }
+                        outputFileName = fileName
+                    }
+                }
+            }
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+    kotlinOptions {
+        jvmTarget = '11'
+    }
+    buildFeatures {
+        compose true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion compose_version
+    }
+    packagingOptions {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
+    }
+}
+
+dependencies {
+
+    implementation 'androidx.core:core-ktx:1.8.0'
+    implementation 'androidx.appcompat:appcompat:1.4.2'
+
+    implementation "androidx.compose.ui:ui:$compose_version"
+    implementation "androidx.compose.material:material:$compose_version"
+    implementation "androidx.compose.ui:ui-tooling-preview:$compose_version"
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.4.1'
+    implementation 'androidx.activity:activity-compose:1.4.0'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+    androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
+    debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
+    debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_version"
+    implementation 'com.blankj:utilcodex:1.31.0'
+
+    def lifecycle_version = "2.6.0-alpha01"
+    runtimeOnly 'androidx.lifecycle:lifecycle-viewmodel-compose:2.6.0-alpha01'
+    implementation "androidx.compose.runtime:runtime-livedata:1.2.0-beta03"
+
+    // ViewModel
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
+    // LiveData
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version"
+    // Lifecycles only (without ViewModel or LiveData)
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
+    // Saved state module for ViewModel
+    implementation "androidx.lifecycle:lifecycle-viewmodel-savedstate:$lifecycle_version"
+    //noinspection LifecycleAnnotationProcessorWithJava8
+    kapt "androidx.lifecycle:lifecycle-compiler:$lifecycle_version"
+
+    runtimeOnly 'io.coil-kt:coil-compose:2.0.0'
+    implementation 'io.coil-kt:coil-compose-base:2.0.0'
+
+    //systemuicontroller
+    implementation 'com.google.accompanist:accompanist-systemuicontroller:0.18.0'
+    implementation "androidx.navigation:navigation-compose:2.5.0-rc01"
+//    runtimeOnly("io.ktor:ktor-client-core:2.0.0-ide-debug-eap-225")
+    def paging_version = "3.1.1"
+    implementation "androidx.paging:paging-runtime-ktx:$paging_version"
+    implementation "androidx.paging:paging-compose:1.0.0-alpha15"
+    implementation "org.jetbrains.kotlin:kotlin-reflect:1.7.0"
+    //小组件
+    implementation "androidx.glance:glance:1.0.0-alpha03"
+    def work_version = "2.7.1"
+
+    // (Java only)
+//    implementation "androidx.work:work-runtime:$work_version"
+
+    // Kotlin + coroutines
+    implementation "androidx.work:work-runtime-ktx:$work_version"
+    //Ktor
+    implementation "io.ktor:ktor-client-android:2.0.3"
+    implementation 'io.ktor:ktor-client-content-negotiation:2.0.3'
+//    implementation 'io.ktor:ktor-client-gson:2.0.3'
+    runtimeOnly "io.ktor:ktor-client-core:2.0.3"
+    implementation 'io.ktor:ktor-client-serialization:2.0.3'
+//    implementation "io.ktor:ktor-serialization-gson:2.0.3"
+    implementation 'com.google.code.gson:gson:2.9.0'
+
+    implementation "io.ktor:ktor-serialization-kotlinx-json:2.0.3"
+    implementation 'org.jsoup:jsoup:1.15.2'
+    implementation 'com.google.accompanist:accompanist-pager:0.26.0-alpha'
+
+}
