@@ -1,10 +1,8 @@
 package xyz.with.observe.ui
 
 import android.annotation.SuppressLint
-import android.webkit.WebChromeClient
-import android.webkit.WebSettings
-import android.webkit.WebView
-import android.webkit.WebViewClient
+import android.net.http.SslError
+import android.webkit.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Scaffold
@@ -18,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavHostController
+import com.blankj.utilcode.util.LogUtils
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import xyz.with.observe.theme.statusBarColor
 import xyz.with.observe.viewmodel.MainViewModel
@@ -59,6 +58,7 @@ fun NewsView(mainViewModel: MainViewModel) {
                     val webViewSetting = webView.settings
                     webViewSetting.apply {
                         javaScriptEnabled = true
+                        javaScriptCanOpenWindowsAutomatically = false
                         cacheMode = WebSettings.LOAD_CACHE_ELSE_NETWORK
 //                        useWideViewPort = true
                         loadWithOverviewMode = true
@@ -85,6 +85,23 @@ fun NewsView(mainViewModel: MainViewModel) {
                         override fun onPageFinished(view: WebView, url: String?) {
                             super.onPageFinished(view, url)
                             view.evaluateJavascript("javascript: $js", null)
+                        }
+
+                        override fun shouldOverrideUrlLoading(
+                            view: WebView,
+                            request: WebResourceRequest
+                        ): Boolean {
+                            view.loadUrl(request.url.toString())
+                            return true
+                        }
+
+                        @SuppressLint("WebViewClientOnReceivedSslError")
+                        override fun onReceivedSslError(
+                            view: WebView?,
+                            handler: SslErrorHandler,
+                            error: SslError?
+                        ) {
+                            handler.proceed()
                         }
                     }
 

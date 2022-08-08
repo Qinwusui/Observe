@@ -222,12 +222,18 @@ object Repo {
                 for (i in el.allElements) {
                     if (i.attr("data-sensor") == "标题") {
                         rightData.title = i.text()
-                        rightData.contentUrl = if (i.attr("href").contains("http")) {
-                            i.attr("href")
-                        } else {
-                            URL_MAIN + i.attr("href")
-
-                        }
+                        rightData.contentUrl =
+                            if (i.attr("href").startsWith("http") && !i.attr("href")
+                                    .startsWith("https")
+                            ) {
+                                i.attr("href").replace("http", "https")
+                            } else {
+                                if (i.attr("href").startsWith("https")) {
+                                    i.attr("href")
+                                } else {
+                                    URL_MAIN + i.attr("href")
+                                }
+                            }
                     }
                     if (i.hasAttr("data-original")) {
                         if (i.parent()?.attr("data-sensor") == "图片") {
