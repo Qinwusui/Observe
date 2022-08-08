@@ -1,7 +1,11 @@
 package xyz.with.observe.api
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.util.Log
+import androidx.core.content.edit
+import com.blankj.utilcode.util.PathUtils
+import com.google.gson.GsonBuilder
 import io.ktor.client.*
 import io.ktor.client.engine.android.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -14,9 +18,12 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import xyz.with.observe.app.ObsApplication
+import java.io.File
 
 object Repo {
     private const val URL_MAIN = "https://www.guancha.cn"
@@ -242,6 +249,102 @@ object Repo {
         }
         emit(list)
     }.distinctUntilChanged().flowOn(Dispatchers.IO)
+
+    //获取开关状态
+    fun catchSwitch(isEdit: Boolean = false, data: Boolean = false) = flow {
+        val sharedPreferences =
+            ObsApplication.context.getSharedPreferences("webView", Context.MODE_PRIVATE)
+        if (isEdit) {
+            sharedPreferences.edit(true) {
+                putBoolean("enableScript", data)
+            }
+            emit(data)
+        } else {
+            val isEnabled = sharedPreferences.getBoolean("enableScript", false)
+            emit(isEnabled)
+        }
+    }
+
+    //加载JsUrl
+    fun loadScriptUrl(): MutableList<String> {
+        var list = mutableListOf<String>()
+        val gson = GsonBuilder().setPrettyPrinting().create()
+        val path = PathUtils.getExternalAppDataPath() + "/files/JsUrl.json"
+        val file = File(path)
+        if (!file.isFile) {
+            file.createNewFile()
+            writeToJsFile(list)
+        }
+        list = gson.fromJson(file.readText(), list::class.java)
+        return list
+    }
+
+    //添加Js脚本
+    fun addScriptUrl(url: String): MutableList<String> {
+        val list = loadScriptUrl()
+        if (!list.contains(url)) {
+            list.add(url)
+        }
+        writeToJsFile(list)
+        return list
+    }
+
+    //移除Js脚本
+    fun removeScriptUrl(url: String): MutableList<String> {
+        val list = loadScriptUrl()
+        if (list.contains(url)) {
+            list.remove(url)
+        }
+        writeToJsFile(list)
+        return list
+    }
+
+    //更改后写入文件
+    private fun writeToJsFile(list: MutableList<String>) {
+        val path = PathUtils.getExternalAppDataPath() + "/files/JsUrl.json"
+        val file = File(path)
+        val gson = GsonBuilder().setPrettyPrinting().create()
+        file.writeText(gson.toJson(list))
+    }
+
+    //读取Js
+    fun loadJsByFile(): String {
+        val file = File(PathUtils.getExternalAppDataPath() + "/files/js")
+        if (!file.isFile) {
+            return ""
+        }
+        return file.readText()
+    }
+
+    //写入Js
+    suspend fun writeJsByUrl() = flow {
+        val list = loadScriptUrl()
+        val file = File(PathUtils.getExternalAppDataPath() + "/files/js")
+        if (!file.isFile) {
+            file.delete()
+        }
+        list.forEach { url ->
+            if ("http(s)://".toRegex().containsMatchIn(url)) {
+                withContext(Dispatchers.IO) {
+                    try {
+                        val jsoup = Jsoup.connect(url).get()
+                        jsoup.body().allElements.first { it.tagName() == "pre" }.apply {
+                            val text = this.text()
+                            for (i in text.lines()) {
+                                if (!i.startsWith("//")) {
+                                    file.appendText(i + "\n")
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+
+                    }
+
+                }
+            }
+        }
+        emit(true)
+    }
 }
 
 fun String.loge() = Log.e("TAG", this)
