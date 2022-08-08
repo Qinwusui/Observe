@@ -29,7 +29,7 @@ class MainViewModel(private val repo: Repo = Repo) : ViewModel() {
         getHtml()
     }
 
-    private fun getHtml() {
+    fun getHtml() {
         viewModelScope.launch {
             repo.getHtmlDocument().collect { docu ->
                 repo.getContent(docu).collect {

@@ -61,7 +61,6 @@ android {
                 variant.outputs.all { output ->
                     def outputFile = output.outputFile
                     def fileName=""
-                    def date =new Date().format("yyyy_MM_dd", TimeZone.getTimeZone("GMT+08"))
                     if (outputFile != null && outputFile.name.endsWith('.apk')) {
                         if (variant.buildType.name == 'release') {//如果是release包
                             fileName = "${defaultConfig.versionName}.apk"
@@ -80,6 +79,7 @@ android {
     }
     kotlinOptions {
         jvmTarget = '11'
+        freeCompilerArgs += '-opt-in=kotlin.RequiresOptIn'
     }
     buildFeatures {
         compose true
@@ -159,5 +159,6 @@ dependencies {
     implementation "io.ktor:ktor-serialization-kotlinx-json:2.0.3"
     implementation 'org.jsoup:jsoup:1.15.2'
     implementation 'com.google.accompanist:accompanist-pager:0.26.0-alpha'
+    implementation 'com.google.accompanist:accompanist-swiperefresh:0.26.0-alpha'
 
 }

@@ -3,14 +3,13 @@ package xyz.with.observe.ui
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,20 +29,24 @@ import coil.compose.SubcomposeAsyncImage
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import xyz.with.observe.app.ObsApplication
-import xyz.with.observe.theme.cardColor
+import xyz.with.observe.theme.statusBarColor
 import xyz.with.observe.viewmodel.MainViewModel
 
-@OptIn(ExperimentalPagerApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalPagerApi::class)
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun MainView(mainViewModel: MainViewModel) {
     val systemUiController = rememberSystemUiController()
     LaunchedEffect(key1 = systemUiController, block = {
-        systemUiController.setStatusBarColor(cardColor, false)
-        systemUiController.setSystemBarsColor(cardColor, false)
+        systemUiController.setStatusBarColor(statusBarColor, false)
+        systemUiController.setSystemBarsColor(statusBarColor, false)
     })
     //左边栏，中间，右边栏，头条
     val leftListData = mainViewModel.leftContent.collectAsState().value
@@ -51,31 +54,66 @@ fun MainView(mainViewModel: MainViewModel) {
     val rightData = mainViewModel.rightContent.collectAsState().value
     val contentHeadLine = mainViewModel.contentHeadLine.collectAsState().value
 
-//    centerData.shuffle()
-    //左侧随机化
-    leftListData.shuffle()
-    //右侧随机化
-    rightData.shuffle()
     val imgLoader = ImageLoader.Builder(ObsApplication.context).build()
     val tabViewData = remember {
         mutableStateListOf("观点", "要闻", "风闻")
     }
-    val state = rememberPagerState(initialPage = 0)
+    val state = rememberPagerState(initialPage = 1)
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-//    LogUtils.e(leftListData)
+    var swipe by remember {
+        mutableStateOf(false)
+    }
+    LaunchedEffect(key1 = swipe, block = {
+        if (swipe) {
+            delay(2000)
+            mainViewModel.getHtml()
+            swipe = false
+        }
+    })
     Scaffold(modifier = Modifier.fillMaxSize(), topBar = {
         TopAppBar(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
+                .fillMaxWidth(),
+            backgroundColor = statusBarColor
         ) {
             Row(
                 modifier = Modifier.fillMaxSize(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                Text("观察者网")
+                AnimatedVisibility(visible = !swipe) {
+                    ScrollableTabRow(
+                        selectedTabIndex = state.currentPage,
+                        backgroundColor = statusBarColor,
+                        contentColor = Color.White,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        tabViewData.forEachIndexed { i, d ->
+                            Box(
+                                modifier = Modifier
+                                    .height(40.dp)
+                                    .width(80.dp)
+                                    .clickable {
+                                        scope.launch { state.animateScrollToPage(i, 0f) }
+                                    }, contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = d,
+                                    fontSize = if (state.currentPage == i) 20.sp else 15.sp,
+                                    fontWeight = if (state.currentPage == i) FontWeight.ExtraBold else FontWeight.Light
+                                )
+                            }
+                        }
+                    }
+                }
+                AnimatedVisibility(visible = swipe) {
+                    Text(
+                        text = "刷新中...",
+                        color = Color.White,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
             }
         }
     }) {
@@ -89,90 +127,47 @@ fun MainView(mainViewModel: MainViewModel) {
                 Text(text = "加载中...")
             }
         } else {
-            Column(
-                modifier = Modifier
-                    .verticalScroll(rememberScrollState())
-                    .fillMaxSize(),
-            ) {
-                LazyColumn(
-                    state = rememberLazyListState(),
-                    modifier = Modifier.height(276.dp),
-                    contentPadding = it
-                ) {
-
-                    item {
-                        Column(modifier = Modifier
-                            .fillMaxSize()
-                            .clickable {
-                                val intent = Intent(Intent.ACTION_VIEW)
-                                intent.data = Uri.parse(contentHeadLine.contentUrl)
-                                context.startActivity(intent)
-                            }) {
-                            Text(
-                                text = contentHeadLine.title,
-                                fontSize = 30.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                textAlign = TextAlign.Center,
-                            )
-                            Card(shape = RoundedCornerShape(10.dp), elevation = 0.dp) {
-                                SubcomposeAsyncImage(
-                                    model = contentHeadLine.imgUrl,
-                                    contentDescription = null,
-                                    imageLoader = imgLoader,
-                                    modifier = Modifier.height(150.dp)
-                                )
-                            }
-                        }
-
-                    }
-                    item {
-                        ScrollableTabRow(
-                            selectedTabIndex = state.currentPage,
-                            backgroundColor = Color.Transparent,
-                            contentColor = cardColor,
-                        ) {
-                            tabViewData.forEachIndexed { i, d ->
-                                Box(
-                                    modifier = Modifier
-                                        .height(40.dp)
-                                        .width(80.dp)
-                                        .clickable {
-                                            scope.launch { state.animateScrollToPage(i, 0f) }
-                                        }, contentAlignment = Alignment.Center
-                                ) {
-                                    Text(text = d)
-                                }
-                            }
-                        }
-
-                    }
-
-                }
+            SwipeRefresh(
+                state = rememberSwipeRefreshState(isRefreshing = swipe),
+                onRefresh = { swipe = true },
+                indicator = { state, trigger ->
+                    SwipeRefreshIndicator(
+                        state = state,
+                        refreshTriggerDistance = trigger,
+                        scale = true,
+                        arrowEnabled = true,
+                        backgroundColor = statusBarColor,
+                        shape = RoundedCornerShape(50.dp),
+                        largeIndication = true,
+                        elevation = 20.dp,
+                        contentColor = Color.White
+                    )
+                }) {
                 HorizontalPager(
                     state = state,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize(),
                     count = 3,
                     verticalAlignment = Alignment.Top
                 ) { page: Int ->
-
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentHeight()
-                            .padding(horizontal = 10.dp),
-                        verticalArrangement = Arrangement.Top,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        when (page) {
-                            //0代表左侧观察员栏
-                            0 -> {
-                                Spacer(modifier = Modifier.height(10.dp))
-                                leftListData.forEach { leftData ->
+                    when (page) {
+                        //0代表左侧观察员栏
+                        0 -> {
+                            LazyColumn(
+                                state = rememberLazyListState(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 10.dp),
+                                verticalArrangement = Arrangement.Top,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                itemsIndexed(leftListData) { i, leftData ->
                                     Card(
                                         shape = RoundedCornerShape(10.dp),
-                                        elevation = 10.dp,
+                                        elevation = 20.dp,
                                         modifier = Modifier
                                             .fillMaxWidth()
+                                            .padding(horizontal = 10.dp, vertical = 10.dp)
                                             .clickable {
                                                 val intent = Intent(Intent.ACTION_VIEW)
                                                 intent.data = Uri.parse(leftData.contentUrl)
@@ -237,18 +232,52 @@ fun MainView(mainViewModel: MainViewModel) {
 
                                     }
                                     Spacer(modifier = Modifier.height(20.dp))
-                                }
 
+                                }
                             }
 
-                            1 -> {
-                                Spacer(modifier = Modifier.height(10.dp))
-                                centerData.forEach { center ->
+                        }
+                        1 -> {
+                            LazyColumn(
+                                state = rememberLazyListState(),
+                                modifier = Modifier
+                                    .padding(horizontal = 10.dp),
+                                verticalArrangement = Arrangement.Top,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                item {
+                                    Column(modifier = Modifier
+                                        .clickable {
+                                            val intent = Intent(Intent.ACTION_VIEW)
+                                            intent.data = Uri.parse(contentHeadLine.contentUrl)
+                                            context.startActivity(intent)
+                                        }) {
+                                        Text(
+                                            text = contentHeadLine.title,
+                                            fontSize = 30.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            textAlign = TextAlign.Center,
+                                        )
+                                        Card(shape = RoundedCornerShape(10.dp), elevation = 0.dp) {
+                                            SubcomposeAsyncImage(
+                                                model = contentHeadLine.imgUrl,
+                                                contentDescription = null,
+                                                imageLoader = imgLoader,
+                                                modifier = Modifier.height(150.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                                item {
+                                    Spacer(modifier = Modifier.height(20.dp))
+                                }
+                                itemsIndexed(centerData) { i, center ->
                                     Card(
                                         shape = RoundedCornerShape(10.dp),
-                                        elevation = 10.dp,
+                                        elevation = 20.dp,
                                         modifier = Modifier
                                             .fillMaxWidth()
+                                            .padding(horizontal = 10.dp, vertical = 10.dp)
                                             .clickable {
                                                 val intent = Intent(Intent.ACTION_VIEW)
                                                 intent.data = Uri.parse(center.contentUrl)
@@ -311,14 +340,24 @@ fun MainView(mainViewModel: MainViewModel) {
                                     Spacer(modifier = Modifier.height(20.dp))
                                 }
                             }
-                            2 -> {
-                                Spacer(modifier = Modifier.height(10.dp))
-                                rightData.forEach { right ->
+
+                        }
+                        2 -> {
+                            LazyColumn(
+                                state = rememberLazyListState(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 10.dp),
+                                verticalArrangement = Arrangement.Top,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                itemsIndexed(rightData) { i, right ->
                                     Card(
                                         shape = RoundedCornerShape(10.dp),
-                                        elevation = 10.dp,
+                                        elevation = 20.dp,
                                         modifier = Modifier
                                             .fillMaxWidth()
+                                            .padding(vertical = 10.dp, horizontal = 10.dp)
                                             .clickable {
                                                 val intent = Intent(Intent.ACTION_VIEW)
                                                 intent.data = Uri.parse(right.contentUrl)
@@ -358,14 +397,15 @@ fun MainView(mainViewModel: MainViewModel) {
                                     }
                                     Spacer(modifier = Modifier.height(20.dp))
                                 }
+
                             }
+
                         }
-
                     }
-
-
                 }
             }
+
+
         }
     }
 }
