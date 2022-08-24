@@ -2,23 +2,22 @@ package xyz.with.observe.ui
 
 import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -155,7 +154,21 @@ fun MainView(mainViewModel: MainViewModel, navController: NavHostController) {
                         selectedTabIndex = state.currentPage,
                         backgroundColor = statusBarColor,
                         contentColor = Color.White,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        indicator = {
+                            val modifier = Modifier.tabIndicatorOffset(it[state.currentPage])
+                            Canvas(modifier = modifier){
+                                drawCircle(Color.White,15f)
+                            }
+                        },
+                        divider = {
+                            Divider(
+                                modifier = Modifier
+                                    .requiredHeight(0.dp)
+                                    .fillMaxWidth()
+                                    .background(Color.White)
+                            )
+                        }
                     ) {
                         tabViewData.forEachIndexed { i, d ->
                             Box(
@@ -168,6 +181,7 @@ fun MainView(mainViewModel: MainViewModel, navController: NavHostController) {
                             ) {
                                 Text(
                                     text = d,
+                                    color = if (state.currentPage == i) Color.White else Color.Unspecified,
                                     fontSize = if (state.currentPage == i) 20.sp else 15.sp,
                                     fontWeight = if (state.currentPage == i) FontWeight.ExtraBold else FontWeight.Light
                                 )
@@ -191,7 +205,7 @@ fun MainView(mainViewModel: MainViewModel, navController: NavHostController) {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(color = statusBarColor)
                 Text(text = "加载中...")
             }
         } else {
@@ -251,7 +265,6 @@ fun MainView(mainViewModel: MainViewModel, navController: NavHostController) {
                                             Text(
                                                 text = leftData.title,
                                                 fontSize = 18.sp,
-                                                fontStyle = FontStyle.Italic,
                                                 fontWeight = FontWeight.Bold
                                             )
                                             Spacer(modifier = Modifier.height(2.dp))
@@ -288,6 +301,19 @@ fun MainView(mainViewModel: MainViewModel, navController: NavHostController) {
                                                 }
                                             }
                                             Spacer(modifier = Modifier.height(5.dp))
+                                            Card(
+                                                shape = RoundedCornerShape(10.dp),
+                                                elevation = 0.dp
+                                            ) {
+                                                AsyncImage(
+                                                    contentScale = ContentScale.Crop,
+                                                    model = leftData.imgUrl,
+                                                    contentDescription = null,
+                                                    imageLoader = imgLoader,
+                                                    modifier = Modifier.fillMaxWidth()
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.height(3.dp))
                                             Text(text = leftData.content)
                                             Spacer(modifier = Modifier.height(5.dp))
                                             Text(
@@ -320,7 +346,7 @@ fun MainView(mainViewModel: MainViewModel, navController: NavHostController) {
                                         }) {
                                         Text(
                                             text = contentHeadLine.title,
-                                            fontSize = 30.sp,
+                                            fontSize = 20.sp,
                                             fontWeight = FontWeight.SemiBold,
                                             textAlign = TextAlign.Center,
                                         )
@@ -354,7 +380,6 @@ fun MainView(mainViewModel: MainViewModel, navController: NavHostController) {
                                             Text(
                                                 text = center.title,
                                                 fontSize = 18.sp,
-                                                fontStyle = FontStyle.Italic,
                                                 fontWeight = FontWeight.Bold
                                             )
                                             Spacer(modifier = Modifier.height(5.dp))
@@ -431,7 +456,6 @@ fun MainView(mainViewModel: MainViewModel, navController: NavHostController) {
                                             Text(
                                                 text = right.title,
                                                 fontSize = 18.sp,
-                                                fontStyle = FontStyle.Italic,
                                                 fontWeight = FontWeight.Bold
                                             )
                                             Spacer(modifier = Modifier.height(5.dp))
