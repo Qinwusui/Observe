@@ -1,8 +1,12 @@
 package xyz.with.observe.theme
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 
-val statusBarColor = Color(0xffd07982)
+val mainColor = Color(0xffd07982)
+var statusBarColor by mutableStateOf(mainColor)
 val BackGroundColor = Color(0xfffffdfd)
 val buttonColor = Color(0xffce9198)
 val textColor = Color(0xff8981aa)

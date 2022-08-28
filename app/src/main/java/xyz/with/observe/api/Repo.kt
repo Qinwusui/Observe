@@ -2,6 +2,9 @@ package xyz.with.observe.api
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import android.util.Log
 import androidx.core.content.edit
 import com.blankj.utilcode.util.PathUtils
@@ -24,6 +27,7 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import xyz.with.observe.app.ObsApplication
 import java.io.File
+
 
 object Repo {
     private const val URL_MAIN = "https://www.guancha.cn"
@@ -351,6 +355,22 @@ object Repo {
         }
         emit(true)
     }
+
+    //清理缓存
+    fun clearCaches() {
+        val pActivity = ObsApplication.context
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+        val uri = Uri.fromParts("package", pActivity.packageName, null)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        intent.data = uri
+        try {
+            pActivity.startActivity(intent)
+        } catch (e: java.lang.Exception) {
+            e.printStackTrace()
+        }
+    }
+
+
 }
 
 fun String.loge() = Log.e("TAG", this)

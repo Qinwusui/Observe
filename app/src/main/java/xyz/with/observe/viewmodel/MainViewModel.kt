@@ -114,4 +114,9 @@ class MainViewModel(private val repo: Repo = Repo) : ViewModel() {
             }
         }
     }
+
+    //清理缓存
+    fun clearCaches() = Repo.clearCaches()
+
+
 }

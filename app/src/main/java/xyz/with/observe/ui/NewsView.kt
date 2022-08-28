@@ -15,8 +15,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.navigation.NavHostController
-import com.blankj.utilcode.util.LogUtils
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import xyz.with.observe.theme.statusBarColor
 import xyz.with.observe.viewmodel.MainViewModel
@@ -52,6 +50,8 @@ fun NewsView(mainViewModel: MainViewModel) {
             }
         }
     }) {
+
+
         if (jsLoading) {
             AndroidView(
                 factory = {

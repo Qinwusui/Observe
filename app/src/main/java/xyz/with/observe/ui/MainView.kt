@@ -5,18 +5,19 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.TabRowDefaults.tabIndicatorOffset
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
-import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -38,6 +39,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import xyz.with.observe.app.ObsApplication
 import xyz.with.observe.theme.buttonColor
+import xyz.with.observe.theme.colorBlue
 import xyz.with.observe.theme.statusBarColor
 import xyz.with.observe.viewmodel.MainViewModel
 
@@ -46,10 +48,10 @@ import xyz.with.observe.viewmodel.MainViewModel
 @Composable
 fun MainView(mainViewModel: MainViewModel, navController: NavHostController) {
     val systemUiController = rememberSystemUiController()
-    LaunchedEffect(key1 = systemUiController, block = {
+    SideEffect {
         systemUiController.setStatusBarColor(statusBarColor, false)
         systemUiController.setSystemBarsColor(statusBarColor, false)
-    })
+    }
     //左边栏，中间，右边栏，头条
     val leftListData = mainViewModel.leftContent.collectAsState().value
     val centerData = mainViewModel.centerContent.collectAsState().value
@@ -66,6 +68,8 @@ fun MainView(mainViewModel: MainViewModel, navController: NavHostController) {
     var swipe by remember {
         mutableStateOf(false)
     }
+    val swipeState = rememberSwipeRefreshState(isRefreshing = swipe)
+
     var showAddUrlDialog by remember {
         mutableStateOf(false)
     }
@@ -77,6 +81,9 @@ fun MainView(mainViewModel: MainViewModel, navController: NavHostController) {
     }
     var willDeleteUrl by remember {
         mutableStateOf("")
+    }
+    val listStateList = remember {
+        mutableStateListOf(LazyListState(), LazyListState(), LazyListState(), LazyListState())
     }
     AnimatedVisibility(visible = showDeleteDialog) {
         AlertDialog(onDismissRequest = { showDeleteDialog = false },
@@ -133,6 +140,7 @@ fun MainView(mainViewModel: MainViewModel, navController: NavHostController) {
     }
     LaunchedEffect(key1 = swipe, block = {
         if (swipe) {
+            listStateList[state.currentPage].animateScrollToItem(0, 0)
             delay(2000)
             mainViewModel.getHtml()
             swipe = false
@@ -157,8 +165,8 @@ fun MainView(mainViewModel: MainViewModel, navController: NavHostController) {
                         modifier = Modifier.fillMaxSize(),
                         indicator = {
                             val modifier = Modifier.tabIndicatorOffset(it[state.currentPage])
-                            Canvas(modifier = modifier){
-                                drawCircle(Color.White,15f)
+                            Canvas(modifier = modifier) {
+                                drawCircle(Color.White, 15f)
                             }
                         },
                         divider = {
@@ -198,6 +206,22 @@ fun MainView(mainViewModel: MainViewModel, navController: NavHostController) {
                 }
             }
         }
+    }, floatingActionButtonPosition = FabPosition.End, floatingActionButton = {
+        AnimatedVisibility(visible = state.currentPage != 3) {
+            ExtendedFloatingActionButton(
+                text = {
+                    Text(text = "刷新", color = Color.White)
+                },
+                onClick = { swipe = true },
+                backgroundColor = statusBarColor,
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        tint = Color.White,
+                        contentDescription = null
+                    )
+                })
+        }
     }) {
         if (centerData.isEmpty()) {
             Column(
@@ -210,7 +234,7 @@ fun MainView(mainViewModel: MainViewModel, navController: NavHostController) {
             }
         } else {
             SwipeRefresh(
-                state = rememberSwipeRefreshState(isRefreshing = swipe),
+                state = swipeState,
                 onRefresh = { swipe = true },
                 indicator = { state, trigger ->
                     SwipeRefreshIndicator(
@@ -221,7 +245,7 @@ fun MainView(mainViewModel: MainViewModel, navController: NavHostController) {
                         backgroundColor = statusBarColor,
                         shape = RoundedCornerShape(50.dp),
                         largeIndication = true,
-                        elevation = 20.dp,
+                        elevation = 10.dp,
                         contentColor = Color.White
                     )
                 }) {
@@ -229,14 +253,15 @@ fun MainView(mainViewModel: MainViewModel, navController: NavHostController) {
                     state = state,
                     modifier = Modifier
                         .fillMaxSize(),
-                    count = 4,
+                    count = listStateList.size,
                     verticalAlignment = Alignment.Top
                 ) { page: Int ->
                     when (page) {
                         //0代表左侧观察员栏
                         0 -> {
+
                             LazyColumn(
-                                state = rememberLazyListState(),
+                                state = listStateList[page],
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 10.dp),
@@ -329,13 +354,16 @@ fun MainView(mainViewModel: MainViewModel, navController: NavHostController) {
                                 }
                             }
 
+
                         }
                         1 -> {
+
                             LazyColumn(
-                                state = rememberLazyListState(),
+                                state = listStateList[page],
                                 modifier = Modifier
                                     .padding(horizontal = 10.dp),
                                 verticalArrangement = Arrangement.Top,
+                                contentPadding = it,
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 item {
@@ -427,12 +455,14 @@ fun MainView(mainViewModel: MainViewModel, navController: NavHostController) {
                                     }
                                     Spacer(modifier = Modifier.height(20.dp))
                                 }
+
                             }
+
 
                         }
                         2 -> {
                             LazyColumn(
-                                state = rememberLazyListState(),
+                                state = listStateList[page],
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 10.dp),
@@ -525,6 +555,56 @@ fun MainView(mainViewModel: MainViewModel, navController: NavHostController) {
                                     }
                                 }
                                 item {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(80.dp)
+                                            .clickable {
+                                                mainViewModel.clearCaches()
+                                            }
+                                            .padding(horizontal = 20.dp),
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.Start
+                                        ) {
+                                            Text(text = "清理WebView缓存")
+                                        }
+                                        Text(
+                                            text = "这将会清理留存的图片和WebView网页缓存",
+                                            fontSize = 13.sp,
+                                            color = Color.Gray
+                                        )
+                                    }
+                                }
+                                item {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(80.dp)
+                                            .padding(horizontal = 20.dp)
+                                            .clickable {
+                                                statusBarColor = colorBlue
+                                            },
+                                        verticalArrangement = Arrangement.Center,
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.Start
+                                        ) {
+                                            Text(text = "更换强调色")
+                                        }
+                                        Text(
+                                            text = "娱乐功能，仅本次使用生效",
+                                            color = Color.Gray,
+                                            fontSize = 13.sp
+                                        )
+                                    }
+                                }
+                                item {
                                     AnimatedVisibility(visible = enableScript) {
                                         Column(
                                             modifier = Modifier
@@ -534,17 +614,17 @@ fun MainView(mainViewModel: MainViewModel, navController: NavHostController) {
                                                 .padding(horizontal = 20.dp),
                                             verticalArrangement = Arrangement.Center,
                                             horizontalAlignment = Alignment.Start
-
                                         ) {
                                             Text(text = "添加远程Js脚本URL")
                                             Text(
-                                                text = "目前仅支持Greasyfork.org仓库上的脚本",
+                                                text = "目前仅支持GreasyFork.org仓库上的脚本",
                                                 color = Color.Gray,
                                                 fontSize = 13.sp
                                             )
                                         }
                                     }
                                 }
+
                                 itemsIndexed(jsUrlList) { _, url ->
                                     AnimatedVisibility(visible = enableScript) {
                                         Column(modifier = Modifier
@@ -562,6 +642,7 @@ fun MainView(mainViewModel: MainViewModel, navController: NavHostController) {
                                         }
                                     }
                                 }
+
                             }
                         }
                     }
