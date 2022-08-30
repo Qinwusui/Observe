@@ -82,9 +82,8 @@ fun MainView(mainViewModel: MainViewModel, navController: NavHostController) {
     var willDeleteUrl by remember {
         mutableStateOf("")
     }
-    val listStateList = remember {
-        mutableStateListOf(LazyListState(), LazyListState(), LazyListState(), LazyListState())
-    }
+
+    val listStateList= mutableListOf(rememberLazyListState(),rememberLazyListState(),rememberLazyListState())
     AnimatedVisibility(visible = showDeleteDialog) {
         AlertDialog(onDismissRequest = { showDeleteDialog = false },
             confirmButton = {
