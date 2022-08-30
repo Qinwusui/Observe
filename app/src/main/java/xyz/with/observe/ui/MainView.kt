@@ -83,7 +83,12 @@ fun MainView(mainViewModel: MainViewModel, navController: NavHostController) {
         mutableStateOf("")
     }
 
-    val listStateList= mutableListOf(rememberLazyListState(),rememberLazyListState(),rememberLazyListState())
+    val listStateList= mutableListOf(
+        rememberLazyListState(),
+        rememberLazyListState(),
+        rememberLazyListState(),
+        rememberLazyListState()
+    )
     AnimatedVisibility(visible = showDeleteDialog) {
         AlertDialog(onDismissRequest = { showDeleteDialog = false },
             confirmButton = {
