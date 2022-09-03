@@ -2,6 +2,7 @@ package xyz.with.observe.ui
 
 import android.annotation.SuppressLint
 import android.net.http.SslError
+import android.view.View
 import android.webkit.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.CircularProgressIndicator
@@ -15,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.viewinterop.AndroidView
+import com.blankj.utilcode.util.LogUtils
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import xyz.with.observe.theme.statusBarColor
 import xyz.with.observe.viewmodel.MainViewModel
@@ -26,7 +28,6 @@ fun NewsView(mainViewModel: MainViewModel) {
     LaunchedEffect(key1 = systemUiController, block = {
         systemUiController.setStatusBarColor(statusBarColor, false)
         systemUiController.setSystemBarsColor(statusBarColor, false)
-
     })
     val context = LocalContext.current
     var webTitle by remember {
@@ -34,11 +35,12 @@ fun NewsView(mainViewModel: MainViewModel) {
     }
 
     val webView = WebView(context)
-    val url = mainViewModel.newsUrl.collectAsState().value
+
+    val url by mainViewModel.newsUrl.collectAsState()
     webView.loadUrl(url)
     mainViewModel.loadJs()
-    val js = mainViewModel.js.collectAsState().value
-    val jsLoading = mainViewModel.jsLoading.collectAsState().value
+    val js by mainViewModel.js.collectAsState()
+    val jsLoading by mainViewModel.jsLoading.collectAsState()
     Scaffold(modifier = Modifier.fillMaxSize(), topBar = {
         TopAppBar(modifier = Modifier.fillMaxWidth(), backgroundColor = statusBarColor) {
             Row(
@@ -50,8 +52,6 @@ fun NewsView(mainViewModel: MainViewModel) {
             }
         }
     }) {
-
-
         if (jsLoading) {
             AndroidView(
                 factory = {
@@ -59,7 +59,7 @@ fun NewsView(mainViewModel: MainViewModel) {
                     webViewSetting.apply {
                         javaScriptEnabled = true
                         javaScriptCanOpenWindowsAutomatically = false
-                        cacheMode = WebSettings.LOAD_CACHE_ELSE_NETWORK
+                        cacheMode = WebSettings.LOAD_NO_CACHE
 //                        useWideViewPort = true
                         loadWithOverviewMode = true
                         setSupportZoom(true)
@@ -69,6 +69,9 @@ fun NewsView(mainViewModel: MainViewModel) {
                             "Mozilla/5.0 (Linux; Android 4.4.2; Nexus 4 Build/KOT49H)"
                     }
                     val webChromeClient = object : WebChromeClient() {
+                        override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
+                            super.onShowCustomView(view, callback)
+                        }
                         override fun onReceivedTitle(view: WebView?, title: String) {
                             super.onReceivedTitle(view, title)
                             webTitle = title
@@ -108,8 +111,6 @@ fun NewsView(mainViewModel: MainViewModel) {
 
                     webView.webViewClient = webViewClient
                     webView.webChromeClient = webChromeClient
-
-
 
                     return@AndroidView webView
                 }, modifier = Modifier

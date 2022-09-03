@@ -260,19 +260,57 @@ object Repo {
         emit(list)
     }.distinctUntilChanged().flowOn(Dispatchers.IO)
 
+
+    //枚举
+    enum class SwitchMode {
+        Js, Img
+    }
+
     //获取开关状态
-    fun catchSwitch(isEdit: Boolean = false, data: Boolean = false) = flow {
+    /**
+     * @param isEdit 是否编辑该值
+     * @param data 编辑值
+     * @param mode 编辑对象
+     * @return [Flow<Boolean>]
+     */
+    fun catchSwitch(isEdit: Boolean = false, data: Boolean = false, mode: SwitchMode) = flow {
         val sharedPreferences =
-            ObsApplication.context.getSharedPreferences("webView", Context.MODE_PRIVATE)
-        if (isEdit) {
-            sharedPreferences.edit(true) {
-                putBoolean("enableScript", data)
+            ObsApplication.context.getSharedPreferences(
+                when (mode) {
+                    SwitchMode.Js -> {
+                        "webView"
+                    }
+                    SwitchMode.Img -> {
+                        "ImageManager"
+                    }
+                }, Context.MODE_PRIVATE
+            )
+        when (mode) {
+            SwitchMode.Js -> {
+
+                if (isEdit) {
+                    sharedPreferences.edit(true) {
+                        putBoolean("enableScript", data)
+                    }
+                    emit(data)
+                } else {
+                    val isEnabled = sharedPreferences.getBoolean("enableScript", false)
+                    emit(isEnabled)
+                }
             }
-            emit(data)
-        } else {
-            val isEnabled = sharedPreferences.getBoolean("enableScript", false)
-            emit(isEnabled)
+            SwitchMode.Img -> {
+                if (isEdit) {
+                    sharedPreferences.edit(true) {
+                        putBoolean("showImage", data)
+                    }
+                    emit(data)
+                } else {
+                    val isEnabled = sharedPreferences.getBoolean("showImage", true)
+                    emit(isEnabled)
+                }
+            }
         }
+
     }
 
     //加载JsUrl

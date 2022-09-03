@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    compileSdk 32
+    compileSdkVersion 33
     signingConfigs {
         config {
             enableV3Signing true
@@ -28,9 +28,9 @@ android {
     defaultConfig {
         applicationId "xyz.with.observe"
         minSdk 21
-        targetSdk 32
+        targetSdk 33
         versionCode 1
-        versionName "1.071"
+        versionName "1.08"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -85,7 +85,7 @@ android {
         compose true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion compose_version
+        kotlinCompilerExtensionVersion '1.3.0'
     }
     packagingOptions {
         resources {
@@ -97,13 +97,13 @@ android {
 dependencies {
 
     implementation 'androidx.core:core-ktx:1.8.0'
-    implementation 'androidx.appcompat:appcompat:1.4.2'
+    implementation 'androidx.appcompat:appcompat:1.5.0'
 
     implementation "androidx.compose.ui:ui:$compose_version"
-    implementation "androidx.compose.material:material:$compose_version"
+    implementation "androidx.compose.material:material:1.3.0-beta01"
     implementation "androidx.compose.ui:ui-tooling-preview:$compose_version"
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.4.1'
-    implementation 'androidx.activity:activity-compose:1.4.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.5.1'
+    implementation 'androidx.activity:activity-compose:1.5.1'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
@@ -114,7 +114,7 @@ dependencies {
 
     def lifecycle_version = "2.6.0-alpha01"
     runtimeOnly 'androidx.lifecycle:lifecycle-viewmodel-compose:2.6.0-alpha01'
-    implementation "androidx.compose.runtime:runtime-livedata:1.2.0-beta03"
+    implementation "androidx.compose.runtime:runtime-livedata:1.3.0-beta01"
 
     // ViewModel
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
@@ -132,14 +132,14 @@ dependencies {
 
     //systemuicontroller
     implementation 'com.google.accompanist:accompanist-systemuicontroller:0.18.0'
-    implementation "androidx.navigation:navigation-compose:2.5.0-rc01"
+    implementation "androidx.navigation:navigation-compose:2.5.1"
 //    runtimeOnly("io.ktor:ktor-client-core:2.0.0-ide-debug-eap-225")
     def paging_version = "3.1.1"
     implementation "androidx.paging:paging-runtime-ktx:$paging_version"
-    implementation "androidx.paging:paging-compose:1.0.0-alpha15"
+    implementation "androidx.paging:paging-compose:1.0.0-alpha16"
     implementation "org.jetbrains.kotlin:kotlin-reflect:1.7.0"
     //小组件
-    implementation "androidx.glance:glance:1.0.0-alpha03"
+    implementation "androidx.glance:glance:1.0.0-alpha04"
     def work_version = "2.7.1"
 
     // (Java only)

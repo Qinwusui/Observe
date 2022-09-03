@@ -1,9 +1,5 @@
 package xyz.with.observe.viewmodel
 
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,7 +43,7 @@ class MainViewModel(private val repo: Repo = Repo) : ViewModel() {
     private val _jsLoading = MutableStateFlow(false)
     val jsLoading = _jsLoading.asStateFlow()
 
-    fun writeJsByUrl() {
+    private fun writeJsByUrl() {
         viewModelScope.launch {
             repo.writeJsByUrl().collect {
                 _jsLoading.value = it
@@ -90,8 +86,20 @@ class MainViewModel(private val repo: Repo = Repo) : ViewModel() {
     //获取开关状态
     fun switchScript(v: Boolean) {
         viewModelScope.launch {
-            repo.catchSwitch(true, v).collect {
+            repo.catchSwitch(true, v, mode = Repo.SwitchMode.Js).collect {
                 _enableScript.value = it
+            }
+        }
+    }
+
+    private val _showImg = MutableStateFlow(true)
+    val showImg = _showImg.asStateFlow()
+
+    //获取无图模式
+    fun showImg(b: Boolean) {
+        viewModelScope.launch {
+            repo.catchSwitch(true, b, mode = Repo.SwitchMode.Img).collect {
+                _showImg.value = it
             }
         }
     }
@@ -113,8 +121,11 @@ class MainViewModel(private val repo: Repo = Repo) : ViewModel() {
                     _rightContent.value = it
                 }
             }
-            repo.catchSwitch().collect {
+            repo.catchSwitch(mode = Repo.SwitchMode.Js).collect {
                 _enableScript.value = it
+            }
+            repo.catchSwitch(mode = Repo.SwitchMode.Img).collect {
+                _showImg.value = it
             }
         }
     }
