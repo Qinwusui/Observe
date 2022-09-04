@@ -230,7 +230,7 @@ internal fun Settings(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(80.dp)
-                        .clickable { showDeleteDialog = true }
+                        .clickable { showAddUrlDialog = true }
                         .padding(horizontal = 20.dp),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.Start
